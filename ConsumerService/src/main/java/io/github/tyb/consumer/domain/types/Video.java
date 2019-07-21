@@ -1,4 +1,4 @@
-package io.github.tyb.consumer.domain.tutorial;
+package io.github.tyb.consumer.domain.types;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,23 +8,17 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import java.time.Instant;
-import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+//@Builder
 @Entity
-public class Event {
-
+public class Video {
     @Id
     @GeneratedValue
     private Long id;
-    private Instant date;
-    private String title;
-    private String description;
-    @ManyToMany
-    private Set<UserOld> attendees;
+
+    private Integer width;
+    private String embed_code;
 }

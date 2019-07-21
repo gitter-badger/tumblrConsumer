@@ -22,5 +22,4 @@ public class TumblerConsumerController {
     public void getPosts()   {
         tumblrConsumer.consume();
     }
-
 }

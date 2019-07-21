@@ -1,4 +1,4 @@
-package io.github.tyb.consumer.domain.tutorial;
+package io.github.tyb.consumer.domain.types;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,23 +8,24 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import java.time.Instant;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+//@Builder
 @Entity
-public class Event {
-
+public class Blog {
     @Id
     @GeneratedValue
     private Long id;
-    private Instant date;
+
+    private String name;
     private String title;
     private String description;
-    @ManyToMany
-    private Set<UserOld> attendees;
+    private int posts, likes, followers;
+    private Long updated;
+    private boolean ask, ask_anon;
+
 }
