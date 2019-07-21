@@ -7,9 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.List;
 
 @Data
@@ -19,6 +17,7 @@ import java.util.List;
 @Entity
 public class PhotoPost extends Post {
 
+
     private String caption;
     private Integer width, height;
 
@@ -27,6 +26,7 @@ public class PhotoPost extends Post {
     @OneToMany(mappedBy = "photoPost", cascade = CascadeType.ALL)
     private List<Photo> photos;
 
+    @OneToMany(mappedBy = "photoPost", cascade = CascadeType.ALL)
     protected List<Photo> pendingPhotos;
     protected PhotoType postType = null;
 

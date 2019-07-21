@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.io.File;
 import java.util.List;
 
@@ -18,7 +18,9 @@ import java.util.List;
 @Entity
 public class VideoPost extends Post {
 
+    @OneToMany(mappedBy = "videoPost", cascade = CascadeType.ALL)
     private List<Video> player;
+
     private String caption;
     private String embed, permalink_url;
     private File data;

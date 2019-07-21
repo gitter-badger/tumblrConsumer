@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.PrimaryKeyJoinColumn;
 
 @Data
@@ -14,8 +16,9 @@ import javax.persistence.PrimaryKeyJoinColumn;
 @AllArgsConstructor
 //@Builder
 @Entity
-@PrimaryKeyJoinColumn(name = "postId")
+//@PrimaryKeyJoinColumn(name = "postId")
 public class TextPost extends Post {
+
 
     private String title;
     private String body;

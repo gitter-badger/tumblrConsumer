@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 
 @Data
 @NoArgsConstructor
@@ -14,6 +16,7 @@ import javax.persistence.Entity;
 //@Builder
 @Entity
 public class PostcardPost extends Post {
+
 
     private String body;
     private String asking_name;

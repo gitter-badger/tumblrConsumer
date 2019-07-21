@@ -25,7 +25,9 @@ public class User{
     private List<Blog> blogs;
 
     private String name;
-    private Object following;
+
+    //private Object following;
+    private String following;
     private Integer likes;
     private String default_post_format;
 

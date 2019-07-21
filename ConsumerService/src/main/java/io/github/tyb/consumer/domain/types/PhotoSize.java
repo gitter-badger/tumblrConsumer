@@ -5,9 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Data
 @NoArgsConstructor
@@ -21,5 +19,9 @@ public class PhotoSize {
 
     private int width, height;
     private String url;
+
+    @ManyToOne
+    @JoinColumn
+    private Photo photo;
 
 }

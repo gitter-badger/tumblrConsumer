@@ -1,13 +1,12 @@
 package io.github.tyb.consumer.domain.types;
 
+import io.github.tyb.consumer.domain.types.post.VideoPost;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Data
 @NoArgsConstructor
@@ -21,4 +20,8 @@ public class Video {
 
     private Integer width;
     private String embed_code;
+
+    @ManyToOne
+    @JoinColumn
+    private VideoPost videoPost;
 }
