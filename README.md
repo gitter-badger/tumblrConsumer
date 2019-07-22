@@ -12,4 +12,10 @@ tumblr consumer of my all personal data to be processed and classified.
 1. Uses websocket to send the record bundle which sized 20 per request to the client so not using long polling or subsequent ajax calls
 2. Spring boot, rest, jpa hibernate for backend and a mysql db
 3. `Flyway` migrations and also hibernate ddl autocreation and seeding/loading initial data
-4. will use LDA for topic modeling probably implemented in Python.
+4. will use LDA for topic modeling probably implemented in Python. [TODO]
+5. Gson or Jackson to generically unmarshall/deserialize api json response
+6. Multiple custom security modules
+7. Generic API Consumer
+8. Multimodule maven project
+9. Centralized configuration: properties, secrets
+10. development workflow management: profiles
