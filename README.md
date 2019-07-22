@@ -16,6 +16,7 @@ tumblr consumer of my all personal data to be processed and classified.
 5. Gson or Jackson to generically unmarshall/deserialize api json response
 6. Multiple custom security modules
 7. Generic API Consumer
-8. Multimodule maven project
+8. Multimodule maven project - multiple services
 9. Centralized configuration: properties, secrets
 10. development workflow management: profiles
+11. a react client as a dashboard
