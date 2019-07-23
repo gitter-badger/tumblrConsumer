@@ -1,6 +1,7 @@
 package io.github.tyb.consumer.test;
 
 import io.github.tyb.consumer.service.Consumer;
+import io.github.tyb.consumer.service.Scraper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,21 @@ public class ConsumerTest {
     @Autowired
     private Consumer consumer;
 
+    @Autowired
+    private Scraper scraper;
+
     @Test
     public void consumeRaw() {
         consumer.consumeRaw();
+    }
+
+    @Test
+    public void consume() {
+        consumer.consume();
+    }
+
+    @Test
+    public void scrapeEksi() {
+        scraper.getEksiGundem();
     }
 }

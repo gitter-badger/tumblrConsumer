@@ -12,6 +12,7 @@ import com.tumblr.jumblr.types.TextPost;
 import com.tumblr.jumblr.types.User;
 import io.github.tyb.common.gson.GenericGson;
 import io.github.tyb.common.util.ConsumerSecret;
+import io.github.tyb.consumer.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +35,9 @@ public class Consumer {
 
     private JumblrClient jumblrClient;
 
+    @Autowired
+    PostRepository postRepository;
+
     public void consume() {
         this.connect();
 
@@ -52,8 +56,20 @@ public class Consumer {
             //Generic yapının gereği olarak Post supertype.
             //TextPost gibi xxxPost tipinde subtype'lar var.
             //List<TextPost> textPosts =  blog.draftPosts();
-            Post post = posts.get(0);
+            String typeName = posts.get(0).getType().getValue();
+            String className = typeName.substring(0, 1).toUpperCase() + typeName.substring(1) + "Post";
+            try {
+                Class<?> clz = Class.forName("com.tumblr.jumblr.types." + className);
+            } catch (ClassNotFoundException e) { }
 
+            Post post = posts.get(0);
+            if(post instanceof TextPost) {
+                System.out.println("textPost: " + ((TextPost) post).getTitle());
+                System.out.println("textPost: " + ((TextPost) post).getBody());
+                String jsonStr = new Gson().toJson(post);
+                io.github.tyb.consumer.domain.types.post.Post savedPost = new Gson().fromJson(jsonStr, io.github.tyb.consumer.domain.types.post.Post.class);
+                postRepository.save(savedPost);
+            }
 
             System.out.println("authorid:" + posts.get(0).getAuthorId());
             System.out.println("blogname:" + posts.get(0).getBlogName());
