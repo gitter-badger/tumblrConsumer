@@ -1,29 +1,20 @@
 package io.github.tyb.consumer.service;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
+import com.google.gson.GsonBuilder;
 import com.tumblr.jumblr.JumblrClient;
 import com.tumblr.jumblr.types.Blog;
 import com.tumblr.jumblr.types.Post;
 import com.tumblr.jumblr.types.TextPost;
 import com.tumblr.jumblr.types.User;
-import io.github.tyb.common.gson.GenericGson;
-import io.github.tyb.common.util.ConsumerSecret;
+import io.github.tyb.common.test.gson.GenericGson;
+import io.github.tyb.common.test.util.ConsumerSecret;
 import io.github.tyb.consumer.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -66,9 +57,15 @@ public class Consumer {
             if(post instanceof TextPost) {
                 System.out.println("textPost: " + ((TextPost) post).getTitle());
                 System.out.println("textPost: " + ((TextPost) post).getBody());
-                String jsonStr = new Gson().toJson(post);
-                io.github.tyb.consumer.domain.types.post.Post savedPost = new Gson().fromJson(jsonStr, io.github.tyb.consumer.domain.types.post.Post.class);
-                postRepository.save(savedPost);
+
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                String jsonStr = gson.toJson(post, TextPost.class);
+
+                System.out.println(jsonStr);
+
+                //io.github.tyb.consumer.domain.types.post.Post savedPost = new Gson().fromJson(jsonStr, io.github.tyb.consumer.domain.types.post.Post.class);
+
+                //postRepository.save(savedPost);
             }
 
             System.out.println("authorid:" + posts.get(0).getAuthorId());
@@ -129,7 +126,7 @@ public class Consumer {
         System.out.println(result2);
 
         GenericGson ggson = new GenericGson();
-        System.out.println("ggson: " + ggson.getResponse(io.github.tyb.common.pojo.types.Post[].class, result2).get().toString());
+        System.out.println("ggson: " + ggson.getResponse(io.github.tyb.common.test.pojo.types.Post[].class, result2).get().toString());
 
 
         /*
@@ -146,7 +143,7 @@ public class Consumer {
 
         List timeline = new ArrayList();
         GenericGson ggson = new GenericGson();
-        ggson.getResponse(io.github.tyb.common.pojo.types.Post.class, response);
+        ggson.getResponse(Post.class, response);
 
          */
 

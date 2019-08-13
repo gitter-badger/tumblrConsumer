@@ -1,11 +1,8 @@
 package io.github.tyb.consumer;
 
-import io.github.tyb.common.config.SecurityConfig;
-import io.github.tyb.common.config.WebSocketConfig;
+import io.github.tyb.common.test.config.WebSocketConfig;
 import io.github.tyb.consumer.repository.GroupRepository;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
