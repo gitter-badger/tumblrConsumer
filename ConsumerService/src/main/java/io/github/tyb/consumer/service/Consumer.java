@@ -90,6 +90,8 @@ public class Consumer {
                                     //serializeNulls().
                                     create();
 
+
+
                 /*
                  * Stackoverflowerror için potansiyel sorunlar:
                  * 1. Post objesinde Enum var.
