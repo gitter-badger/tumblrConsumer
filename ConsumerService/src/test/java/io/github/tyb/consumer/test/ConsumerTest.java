@@ -26,7 +26,8 @@ public class ConsumerTest {
 
     @Test
     public void consume() {
-        consumer.consume();
+        consumer.consume(); //EN BUYUK HATA: BU SEKILDE TEST ETMEYE CALISIRSAN YANILIRSIN
+        //CUNKU BASKA BIR PORTTAN BASKA BIR SPRING UYGULAMASI AYAGA KALDIRIYOR. VUE CLIENT I ISE ONU BILMIYOR.
     }
 
     @Test

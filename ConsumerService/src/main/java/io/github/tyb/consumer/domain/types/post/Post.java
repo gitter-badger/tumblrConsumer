@@ -2,14 +2,13 @@ package io.github.tyb.consumer.domain.types.post;
 
 import io.github.tyb.consumer.domain.Tag;
 import io.github.tyb.consumer.domain.types.Note;
-import lombok.*;
-import org.apache.commons.lang3.StringUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -72,12 +71,14 @@ public class Post {
     //Buna ihtiyaç yok.
     private Long liked_timestamp;
 
+    /*
     @OneToOne(
             fetch = FetchType.LAZY,
             optional = false
     )
     @JoinColumn(name = "content_id", nullable = false)
     private Content content;
+    */
 
     //ÖNEMLİ: Indicates the current state of the post: States are published, queued, draft and private
     private String state;

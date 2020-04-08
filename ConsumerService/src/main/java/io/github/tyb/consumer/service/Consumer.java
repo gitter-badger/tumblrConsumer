@@ -1,22 +1,30 @@
 package io.github.tyb.consumer.service;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tumblr.jumblr.JumblrClient;
-import com.tumblr.jumblr.responses.JsonElementDeserializer;
-import com.tumblr.jumblr.types.*;
+import com.tumblr.jumblr.types.Post;
+import com.tumblr.jumblr.types.TextPost;
+import com.tumblr.jumblr.types.User;
 import io.github.tyb.common.test.gson.GenericGson;
 import io.github.tyb.common.test.util.ConsumerSecret;
 import io.github.tyb.consumer.repository.PostRepository;
+import io.github.tyb.consumer.repository.TextPostRepository;
+import io.github.tyb.consumer.utils.ConsumeUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Component
-@Profile("dev")
+//@Profile("dev")
+@Slf4j
 public class Consumer {
 
     @Autowired
@@ -25,174 +33,90 @@ public class Consumer {
     private JumblrClient jumblrClient;
 
     @Autowired
-    PostRepository postRepository;
+    private PostRepository postRepository;
+
+    @Autowired
+    private TextPostRepository textPostRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate; //simple degil simp :)
+
+    @Autowired
+    //private ConsumeUtils<Post, String, Integer> consumeUtils;
+    private ConsumeUtils<Post, String, Long> consumeUtils;
 
     public void consume() {
         this.connect();
 
-        // Write the user's name
         User user = jumblrClient.user();
         System.out.println(user.getName());
 
-        /* And list their blogs */
-        for(Blog blog : user.getBlogs()) {
-            System.out.println("\t" + blog.getTitle());
+        //https://api.tumblr.com/v2/blog/tyb.tumblr.com/posts/draft
 
-            //get a post and save to database
-            List<Post> posts =  blog.draftPosts();
+        String startTs = "1999-11-27T16:30:00.21234Z";
+        String stopTs = "2099-11-27T16:30:00.21234Z";
+        Map<String, Long> requestOptions = new HashMap<String, Long>();
+        //Map<String, Integer> requestOptions = new HashMap<String, Integer>();
+        //requestOptions.put("limit", 20);
 
-            //Jumblr'da ResponseWrapper Gson ile response'den Object oluşturuyor generic bir biçimde.
-            //Generic yapının gereği olarak Post supertype.
-            //TextPost gibi xxxPost tipinde subtype'lar var.
-            //List<TextPost> textPosts =  blog.draftPosts();
-            String typeName = posts.get(0).getType().getValue();
-            String className = typeName.substring(0, 1).toUpperCase() + typeName.substring(1) + "Post";
-            try {
-                Class<?> clz = Class.forName("com.tumblr.jumblr.types." + className);
-            } catch (ClassNotFoundException e) { }
+        ///posts/draft — Retrieve Draft Posts icin Request Parameter offset/limit degil; before_id
+        //requestOptions.put("offset", 40); //DAMN! READ THE API!
+        requestOptions.put("before_id", Long.MAX_VALUE); //DAMN! READ THE API!
 
-            Post post = posts.get(0);
-            if(post instanceof TextPost) {
-                System.out.println("textPost: " + ((TextPost) post).getTitle());
-                System.out.println("textPost: " + ((TextPost) post).getBody());
 
-                JsonSerializer<Post> postJsonSerializer =  new JsonSerializer<Post>() {
+        //user.getBlogs().get(0).draftPosts(requestOptions);
 
-                    @Override
-                    public JsonElement serialize(Post post, Type type, JsonSerializationContext jsonSerializationContext) {
-                        JsonObject jsonPost = new JsonObject();
-                        jsonPost.addProperty("postid", post.getId());
-                        return jsonPost;
+        //"id" -> "614716618088562688"
+        //"id" -> "611090076806627328"
+
+        //requestOptions.put("before", (int) Instant.parse(startTs).toEpochMilli()); //stop timestamp
+        ///requestOptions.put("after", (int) Instant.parse(stopTs).toEpochMilli()); //start timestamp
+
+        //Query query = new Query();
+        //Function<Map<String, Integer>, List<Post>> requestFn = q -> {
+
+        //Function<Map<String, Integer>, List<Post>> requestFn = q -> {
+        Function<Map<String, Long>, List<Post>> requestFn = q -> {
+            return user.getBlogs().get(0).draftPosts(q);
+        };
+        Stream<Post> postStream = consumeUtils.getPagingQueryStream(requestOptions
+                                                                    ,requestFn
+                                                                    ,r -> r.get(r.size() - 1)
+                                                                    ,r -> requestOptions.put("before_id", r.getId()));
+                                                                    //,r -> requestOptions.put("offset", r));
+        //user.getBlogs().stream()
+                //TODO: make parallel processing for other types.
+                //TODO: resimler sadece okuma amacli kullanilacagindan Mongo ya da Cassandra ya yazilabilir.
+        //        .flatMap(blog -> blog.draftPosts(requestOptions).stream())
+        postStream
+                .filter(TextPost.class::isInstance)
+                .map(TextPost.class::cast)
+                .forEach(textPost -> {
+                    log.info(textPost.getTitle());
+                    log.info(textPost.getBody());
+                    log.info(textPost.getType().getValue());
+                    try {
+                        String postStr = objectMapper.writeValueAsString(textPost);
+                        io.github.tyb.consumer.domain.types.post.TextPost myPost = objectMapper.readValue(postStr, io.github.tyb.consumer.domain.types.post.TextPost.class);
+                        //postRepository.save(myPost);
+                        log.info(myPost.getBody());
+                        log.info(myPost.getTitle());
+                        log.info(myPost.getAuthor());
+                        textPostRepository.save(myPost);
+
+                        //TODO: split to another service or make threaded or async.
+                        //the server will push a greeting into a queue to which the client is subscribed.
+                        messagingTemplate.convertAndSend("/topic/progress", myPost);
+                        //messagingTemplate.convertAndSend("/topic/progress", MyMessage.builder().text("mesaj...").build());
+
+                    } catch (Exception ex) {
+                        log.error("can not be able to convert Jumblr type to my entity.");
                     }
-                };
 
-                JsonSerializer<TextPost> textPostJsonSerializer =  new JsonSerializer<TextPost>() {
-
-                    @Override
-                    public JsonElement serialize(TextPost textPost, Type type, JsonSerializationContext jsonSerializationContext) {
-                        JsonObject jsonPost = new JsonObject();
-                        jsonPost.addProperty("textPostBody", textPost.getBody());
-                        return jsonPost;
-                    }
-                };
-
-                //Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                Gson gson = new GsonBuilder().
-                                    //registerTypeAdapter(TextPost.class, new PostInstanceCreator()).
-                                    //registerTypeAdapter(JsonElement.class, new JsonElementDeserializer()).
-                                    //registerTypeAdapter(JsonElement.class, new JsonElementSerializer()).
-                        //registerTypeAdapter(TextPost.class, new PostSerializer()).
-                        //registerTypeAdapter(Post.class, new PostDeserializer()).
-                                    registerTypeAdapter(Post.class, postJsonSerializer).
-                                    registerTypeAdapter(TextPost.class, textPostJsonSerializer).
-                                    setPrettyPrinting().
-                                    setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).
-                                    //serializeNulls().
-                                    create();
-
-
-
-                /*
-                 * Stackoverflowerror için potansiyel sorunlar:
-                 * 1. Post objesinde Enum var.
-                 * 2. Circular reference yok görünüyor.
-                 * 3.
-                 *
-                 * Potansiyel çözümler:
-                 * 1. Custom serialization to extract only some fields to test
-                 * 2.
-                 */
-                String jsonStr = gson.toJson(post/*, Post.class*/);
-
-                //java.lang.StackOverflowError
-                //	at com.google.gson.internal.bind.TypeAdapters$16.write(TypeAdapters.java:406)
-                //Bu sorun circular ref ya da lombok yani constructor, hashcode, tostring serializable(interface) den kaynaklanıyor.
-                //String jsonStr = gson.toJson(post);
-
-                System.out.println(jsonStr);
-
-                //io.github.tyb.consumer.domain.types.post.Post savedPost = new Gson().fromJson(jsonStr, io.github.tyb.consumer.domain.types.post.Post.class);
-
-                //postRepository.save(savedPost);
-            }
-
-            System.out.println("authorid:" + posts.get(0).getAuthorId());
-            System.out.println("blogname:" + posts.get(0).getBlogName());
-            System.out.println("date:" + posts.get(0).getDateGMT());
-            System.out.println("format:" + posts.get(0).getFormat());
-            System.out.println("posturl:" + posts.get(0).getPostUrl());
-            System.out.println("reblogged from name:" + posts.get(0).getRebloggedFromName());
-            System.out.println("shorturl:" + posts.get(0).getShortUrl());
-            System.out.println("slug:" + posts.get(0).getSlug());
-            System.out.println("sourcetitle:" + posts.get(0).getSourceTitle());
-            System.out.println("sourceurl:" + posts.get(0).getSourceUrl());
-            System.out.println("state:" + posts.get(0).getState());
-            System.out.println("notecount:" + posts.get(0).getNoteCount());
-            System.out.println("type:" + posts.get(0).getType());
-
-        }
-
-        // Like the most recent "lol" tag
-        System.out.println("most recent: " + jumblrClient.tagged("lol").get(0));
-        jumblrClient.tagged("lol").get(0).like();
-
-    }
-
-
-    private class PostInstanceCreator implements InstanceCreator<TextPost> {
-        public TextPost createInstance(Type type) {
-            return new TextPost();
-        }
-    }
-
-    private class JsonElementDeserializer implements JsonDeserializer<JsonElement> {
-        @Override
-        public JsonElement deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
-            return je;
-        }
-    }
-
-    private class JsonElementSerializer implements JsonSerializer<JsonElement> {
-        @Override
-        public JsonElement serialize(JsonElement je, Type type, JsonSerializationContext jdc) throws JsonParseException {
-            return je;
-        }
-    }
-
-    private class PostDeserializer implements JsonDeserializer<Object> {
-
-        @Override
-        public Object deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
-            JsonObject jobject = je.getAsJsonObject();
-            String typeName = jobject.get("type").getAsString();
-            String className = typeName.substring(0, 1).toUpperCase() + typeName.substring(1) + "Post";
-            try {
-                Class<?> clz = Class.forName("com.tumblr.jumblr.types." + className);
-                return jdc.deserialize(je, clz);
-            } catch (ClassNotFoundException e) {
-                System.out.println("deserialized post for unknown type: " + typeName);
-                return jdc.deserialize(je, UnknownTypePost.class);
-            }
-        }
-
-    }
-
-    private class PostSerializer implements JsonSerializer<Post> {
-        @Override
-        public JsonElement serialize(Post o, Type type, JsonSerializationContext jsc) {
-
-            //JsonObject jobject = jsc.serialize(o.)
-            String typeName = o.getType().getValue();
-            //String typeName = jobject.get("type").getAsString();
-            String className = typeName.substring(0, 1).toUpperCase() + typeName.substring(1) + "Post";
-            try {
-                Class<?> clz = Class.forName("com.tumblr.jumblr.types." + className);
-                return jsc.serialize(o, clz);
-            } catch (ClassNotFoundException e) {
-                System.out.println("deserialized post for unknown type: " + typeName);
-                return jsc.serialize(o, UnknownTypePost.class);
-            }
-        }
+                });
     }
 
     public void consumeRaw() {
@@ -264,13 +188,10 @@ public class Consumer {
 
     private void connect() {
         // Create a new client
-        this.jumblrClient = new JumblrClient(consumerSecret.getKey()
-                ,consumerSecret.getSecret());
+        this.jumblrClient = new JumblrClient(consumerSecret.getKey(),consumerSecret.getSecret());
 
         jumblrClient.setToken(consumerSecret.getOauth_token()
                 , consumerSecret.getOauth_token_secret());
     }
-
-
 
 }

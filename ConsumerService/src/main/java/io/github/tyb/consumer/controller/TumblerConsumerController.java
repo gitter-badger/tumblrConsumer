@@ -7,10 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.List;
-
 @Controller
-
 // To elaborate api to manage from security or request routing or api maintenance perspectives.
 @RequestMapping("/api")
 public class TumblerConsumerController {
