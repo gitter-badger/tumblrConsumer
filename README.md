@@ -1,4 +1,7 @@
 # tumblrConsumer
+
+[![Join the chat at https://gitter.im/tumblrConsumer/featureRequests](https://badges.gitter.im/tumblrConsumer/featureRequests.svg)](https://gitter.im/tumblrConsumer/featureRequests?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 tumblr consumer of my all personal data to be processed and classified.
 
 ## details
